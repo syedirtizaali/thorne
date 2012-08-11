@@ -1,152 +1,102 @@
 thorne
-======<?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <artifactId>gameoflife</artifactId>
-        <groupId>com.wakaleo.gameoflife</groupId>
-        <version>0.9.37-SNAPSHOT</version>
-    </parent>
-    <artifactId>gameoflife-acceptance-tests</artifactId>
-    <name>gameoflife-acceptance-tests</name>
-    <properties>
-        <target.version>0.9.22</target.version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jetty.port>9090</jetty.port>
-        <jetty.stop.port>9999</jetty.stop.port>
-        <webdriver.base.url>http://localhost:${jetty.port}</webdriver.base.url>
-        <webdriver.driver>htmlunit</webdriver.driver>
-    </properties>
-    <dependencies>
-        <dependency>
-            <groupId>org.easytesting</groupId>
-            <artifactId>fest-assert</artifactId>
-            <version>1.4</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>net.thucydides</groupId>
-            <artifactId>thucydides-core</artifactId>
-            <version>${thucydides.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>net.thucydides</groupId>
-            <artifactId>thucydides-junit</artifactId>
-            <version>${thucydides.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.googlecode.lambdaj</groupId>
-            <artifactId>lambdaj</artifactId>
-            <version>2.3.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.codehaus.groovy</groupId>
-            <artifactId>groovy-all</artifactId>
-            <version>1.8.2</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>1.6.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.6.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>5.1.9</version>
-        </dependency>
-    </dependencies>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.9</version>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.10</version>
-                <executions>
-                    <execution>
-                        <id>integration-tests</id>
-                        <phase>integration-test</phase>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                        <configuration>
-                            <argLine>-Xmx512m</argLine>
-                            <parallel>classes</parallel>
-                            <threadCount>4</threadCount>
-                            <includes>
-                                <include>**/When*.java</include>
-                                <include>**/*Test.java</include>
-                            </includes>
-                            <systemPropertyVariables>
-                                <webdriver.base.url>${webdriver.base.url}</webdriver.base.url>
-                                <webdriver.driver>${webdriver.driver}</webdriver.driver>
-                            </systemPropertyVariables>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>net.thucydides.maven.plugins</groupId>
-                <artifactId>maven-thucydides-plugin</artifactId>
-                <version>${thucydides.version}</version>
-                <executions>
-                    <execution>
-                        <id>thucydides-reports</id>
-                        <phase>post-integration-test</phase>
-                        <goals>
-                            <goal>aggregate</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-    <profiles>
-        <profile>
-            <id>development</id>
-            <properties>
-                <webdriver.base.url>http://gameoflife-dev.thucydides.cloudbees.net</webdriver.base.url>
-                <webdriver.driver>htmlunit</webdriver.driver>
-            </properties>
-        </profile>
-        <profile>
-            <id>integration</id>
-            <properties>
-                <webdriver.base.url>http://gameoflife-integration.thucydides.cloudbees.net/</webdriver.base.url>
-                <webdriver.driver>firefox</webdriver.driver>
-            </properties>
-        </profile>
-        <profile>
-            <id>staging</id>
-            <properties>
-                <webdriver.base.url>http://gameoflife-staging.thucydides.cloudbees.net</webdriver.base.url>
-                <webdriver.driver>firefox</webdriver.driver>
-            </properties>
-        </profile>
-        <profile>
-            <id>production</id>
-            <properties>
-                <webdriver.base.url>http://gameoflife.thucydides.cloudbees.net/</webdriver.base.url>
-                <webdriver.driver>firefox</webdriver.driver>
-            </properties>
-        </profile>
-    </profiles>
-</project>
+======
+          {exec} = require 'child_process'
+
+run = (command, callback) ->
+  exec command, (err, stdout, stderr) ->
+    console.warn stderr if stderr
+    callback?() unless err
+
+build = (callback) ->
+  run 'coffee -co lib src', callback
+
+bundle = (callback) ->
+  run 'npm install', callback
+
+task "build", "Build lib/ from src/", ->
+  build()
+
+task "test", "Run tests", ->
+  build ->
+    {reporters} = require 'nodeunit'
+    reporters.default.run ['test']
+
+task "fixtures", "Generate .coffee fixtures from .eco fixtures", ->
+  fs   = require "fs"
+  path = require "path"
+  dir  = "#{__dirname}/test/fixtures"
+
+  for filename in fs.readdirSync dir
+    if path.extname(filename) is ".eco"
+      eco          = require "eco"
+      {preprocess} = require "eco/preprocessor"
+      basename     = path.basename filename, ".eco"
+      source       = fs.readFileSync "#{dir}/#{filename}", "utf-8"
+      fs.writeFileSync "#{dir}/#{basename}.coffee", preprocess source
+
+task "dist", "Generate dist/eco.js", ->
+  build -> bundle ->
+    fs     = require("fs")
+    coffee = require("coffee-script").compile
+    uglify = require("uglify-js")
+
+    read = (filename) ->
+      fs.readFileSync "#{__dirname}/#{filename}", "utf-8"
+
+    stub = (identifier) -> """
+      if (typeof #{identifier} !== 'undefined' && #{identifier} != null) {
+        module.exports = #{identifier};
+      } else {
+        throw 'Cannot require \\'' + module.id + '\\': #{identifier} not found';
+      }
+    """
+
+    version = JSON.parse(read "package.json").version
+
+    modules =
+      "eco":              read "lib/index.js"
+      "./compiler":       read "lib/compiler.js"
+      "./preprocessor":   read "lib/preprocessor.js"
+      "./scanner":        read "lib/scanner.js"
+      "./util":           read "lib/util.js"
+      "strscan":          read "node_modules/strscan/lib/strscan.js"
+      "coffee-script":    stub "CoffeeScript"
+
+    package = for name, source of modules
+      """
+        '#{name}': function(module, require, exports) {
+          #{source}
+        }
+      """
+
+    header = """
+      /**
+       * Eco Compiler v#{version}
+       * http://github.com/sstephenson/eco
+       *
+       * Copyright (c) 2011 Sam Stephenson
+       * Released under the MIT License
+       */
+    """
+
+    source = uglify """
+      this.eco = (function(modules) {
+        return function require(name) {
+          var fn, module = {id: name, exports: {}};
+          if (fn = modules[name]) {
+            fn(module, require, module.exports);
+            return module.exports;
+          } else {
+            throw 'Cannot find module \\'' + name + '\\'';
+          }
+        };
+      })({
+        #{package.join ',\n'}
+      })('eco');
+    """
+
+    try
+      fs.mkdirSync "#{__dirname}/dist", 0755
+    catch err
+
+    fs.writeFileSync "#{__dirname}/dist/eco.js", "#{header}\n#{source}"
